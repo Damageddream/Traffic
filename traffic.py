@@ -14,7 +14,6 @@ TEST_SIZE = 0.4
 
 
 def main():
-
     # Check command-line arguments
     if len(sys.argv) not in [2, 3]:
         sys.exit("Usage: python traffic.py data_directory [model.h5]")
@@ -35,7 +34,7 @@ def main():
     model.fit(x_train, y_train, epochs=EPOCHS)
 
     # Evaluate neural network performance
-    model.evaluate(x_test,  y_test, verbose=2)
+    model.evaluate(x_test, y_test, verbose=2)
 
     # Save model to file
     if len(sys.argv) == 3:
@@ -61,8 +60,7 @@ def load_data(data_dir):
     images = []
     labels = []
 
-    for i in range(3):
-        labels.append(i)
+    for i in range(NUM_CATEGORIES - 1):
         dir_name = data_dir
         subdir_name = str(i)
         dir_path = os.path.join(dir_name, subdir_name)
@@ -70,20 +68,36 @@ def load_data(data_dir):
         for img_name in img_list:
             full_path = os.path.join(dir_path, img_name)
             img = cv2.imread(full_path)
-            res = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT), interpolation= cv2.INTER_LINEAR)
+            res = cv2.resize(
+                img, (IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_LINEAR
+            )
             img_array = np.array(res)
             images.append(img_array)
+            labels.append(i)
     return (images, labels)
 
 
-
 def get_model():
-    """
-    Returns a compiled convolutional neural network model. Assume that the
-    `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
-    The output layer should have `NUM_CATEGORIES` units, one for each category.
-    """
-    raise NotImplementedError
+    model = tf.keras.models.Sequential(
+        [
+            tf.keras.layers.Conv2D(
+                33, (3, 3), activation="relu", input_shape=(30, 30, 3)
+            ),
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            tf.keras.layers.Conv2D(
+                33, (2, 2), activation="relu", input_shape=(30, 30, 3)
+            ),
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(360, activation="relu"),
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dense(42, activation="softmax"),
+        ]
+    )
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+    return model
 
 
 if __name__ == "__main__":
